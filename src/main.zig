@@ -16,20 +16,20 @@ const MTRand = struct
 };
 
 // Sets initial seeds of MTRand.mt using the generator in input:
-inline fn init_seeds(rand: *MTRand, seed: u32) void
+inline fn init_seeds(r: *MTRand, seed: u32) void
 {
-    rand.index = 1;
-    rand.mt[0] = seed & 0xffffffff;
+    r.index = 1;
+    r.mt[0] = seed & 0xffffffff;
 
-    while (rand.index < STATE_VECTOR_L)
+    while (r.index < STATE_VECTOR_L)
     {
-        rand.mt[rand.index] = (rand.mt[rand.index - 1] *% 6069) & 0xffffffff;
-        rand.index += 1;
+        r.mt[r.index] = (r.mt[r.index - 1] *% 6069) & 0xffffffff;
+        r.index += 1;
     }
 }
 
 // Returns a pseudo-randomly generated u32:
-fn rand_u32(rand: *MTRand) u32
+fn rand_u32() u32
 {
     var y: u32 = undefined;
 
@@ -47,7 +47,7 @@ fn rand_u32(rand: *MTRand) u32
         const M_L = STATE_VECTOR_M - STATE_VECTOR_L;
 
         if (rand.index < 0 or rand.index >= STATE_VECTOR_L + 1)
-            init_seeds(rand, 4357);
+            init_seeds(&rand, 4357);
 
         while (kk < L_M)
         {
@@ -88,26 +88,26 @@ fn rand_u32(rand: *MTRand) u32
 // Creates a new random number generator from a given seed:
 pub fn init(seed: ?u32) MTRand
 {
-    var rand: MTRand = undefined;
+    var r: MTRand = undefined;
     const s = seed orelse 1337;
 
-    init_seeds(&rand, s);
-    return rand;
+    init_seeds(&r, s);
+    return r;
 }
 
 // Returns a pseudo-randomly generated f64 (in range 0 - 1):
 pub fn random() f64
 {
-    return @as(f64, @floatFromInt(rand_u32(&generator))) / MAX_U32;
+    return @as(f64, @floatFromInt(rand_u32())) / MAX_U32;
 }
 
 // Returns a pseudo-randomly generated i64 (in range min - max):
 pub fn randomInt(min: i64, max: i64) i64
 {
     const range: f64 = @floatFromInt(max - min + 1);
-    const rand: i64 = @intFromFloat(random() * range);
+    const r: i64 = @intFromFloat(random() * range);
 
-    return min + rand;
+    return min + r;
 }
 
 // Returns a pseudo-randomly generated f64 (in range min - max):
@@ -116,5 +116,10 @@ pub fn randomFloat(min: f64, max: f64) f64
     return random() * (max - min) + min;
 }
 
-// First time initialization of the MTRand generator:
-var generator = init(null);
+var rand = init(null);
+
+pub fn main() void
+{
+    for (0..1000) |_|
+        std.debug.print("{d}\n", .{ random() });
+}
