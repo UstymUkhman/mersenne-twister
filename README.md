@@ -5,5 +5,6 @@ Zig port of the [open source](https://github.com/ESultanik/mtwister) Mersenne Tw
 ```bash
 git clone https://github.com/UstymUkhman/mersenne-twister.git
 cd mersenne-twister
-./build.sh
+zig build
+./zig-out/bin/mersenne-twister.exe
 ```
