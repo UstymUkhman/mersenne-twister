@@ -6,20 +6,14 @@ const STATE_VECTOR_M = 397;
 const UPPER_MASK = 0x80000000;
 const LOWER_MASK = 0x7fffffff;
 
+const MAX_U32 = std.math.maxInt(u32);
+
 // Holds generated seeds and current index:
 const MTRand = struct
 {
     mt: [STATE_VECTOR_L]u32,
     index: usize
 };
-
-// Creates a new random number generator from a given seed:
-fn create_generator(seed: u32) MTRand
-{
-    var rand: MTRand = undefined;
-    init_seeds(&rand, seed);
-    return rand;
-}
 
 // Sets initial seeds of MTRand.mt using the generator in input:
 inline fn init_seeds(rand: *MTRand, seed: u32) void
@@ -91,20 +85,36 @@ fn rand_u32(rand: *MTRand) u32
     return y;
 }
 
+// Creates a new random number generator from a given seed:
+pub fn init(seed: ?u32) MTRand
+{
+    var rand: MTRand = undefined;
+    const s = seed orelse 1337;
+
+    init_seeds(&rand, s);
+    return rand;
+}
+
 // Returns a pseudo-randomly generated f64 (in range 0 - 1):
-fn rand_f64(rand: *MTRand) f64
+pub fn random() f64
 {
-    return @as(f64, @floatFromInt(rand_u32(rand))) / @as(f64, 0xffffffff);
+    return @as(f64, @floatFromInt(rand_u32(&generator))) / MAX_U32;
 }
 
-// Command line entry point:
-pub fn main() void
+// Returns a pseudo-randomly generated i64 (in range min - max):
+pub fn randomInt(min: i64, max: i64) i64
 {
-    var rand = create_generator(1337);
+    const range: f64 = @floatFromInt(max - min + 1);
+    const rand: i64 = @intFromFloat(random() * range);
 
-    for (0..10) |_|
-    {
-        const random = rand_f64(&rand);
-        std.debug.print("{}\n", .{ random });
-    }
+    return min + rand;
 }
+
+// Returns a pseudo-randomly generated f64 (in range min - max):
+pub fn randomFloat(min: f64, max: f64) f64
+{
+    return random() * (max - min) + min;
+}
+
+// First time initialization of the MTRand generator:
+var generator = init(null);
